@@ -5,23 +5,10 @@ import os
 import soundfile as sf
 
 
-def write_relay_gain(input_file, output_file, gain):
-    # Load the input audio file
-    audio = AudioSegment.from_file(input_file, format="ogg")
-
-    # Get the current gain of the audio file
-    current_gain = mediainfo(input_file)["tags"]["REPLAYGAIN_GAIN"]
-
-    # Calculate the new gain value
-    new_gain = float(current_gain) + gain
-
-    # Set the new gain value in the audio file's metadata
-    audio.export(output_file, format="ogg", tags={"REPLAYGAIN_GAIN": str(new_gain)})
-
-
 def calculate_lufs_integrated(input_file):
     # Load the input audio file
-    audio = AudioSegment.from_file(input_file, format="ogg")
+    format = mediainfo(input_file)["format_name"]
+    audio = AudioSegment.from_file(input_file, format=format)
 
     # Export the audio to a temporary WAV file
     temp_wav_file = "temp.wav"
@@ -43,9 +30,31 @@ def calculate_gain_to_target_lufs(integrated_lufs, target_lufs):
     return gain_to_target_lufs
 
 
-# Usage example
-input_file = "input/1-08 Jorja Smith -  Blue Lights.ogg"
+def write_replay_gain(input_file, output_file, gain):
+    # Load the input audio file
+    format = mediainfo(input_file)["format_name"]
+    audio = AudioSegment.from_file(input_file, format=format)
+
+    file_tags = mediainfo(input_file)
+
+    # current_gain = mediainfo(input_file)["TAG"]["replaygain_track_gain"]
+    # new_gain = float(current_gain[:-3]) + gain
+
+    new_gain = gain
+    new_gain = round(new_gain, 2)
+    file_tags["replaygain_track_gain"] = str(new_gain)
+    file_tags["replaygain_album_gain"] = ""
+    # cover = mediainfo(input_file)["TAG"]["cover"]
+    # cover
+    # Set the new gain value in the audio file's metadata
+
+    audio.export(output_file, format=format, tags=file_tags, bitrate="320k")
+
+
+input_file = "input/1-08 Jorja Smith -  Blue Lights.mp3"
 integrated_lufs = calculate_lufs_integrated(input_file)
 target_lufs = -14.0
 gain_to_target_lufs = calculate_gain_to_target_lufs(integrated_lufs, target_lufs)
 print(f"gain_to_target_lufs: {gain_to_target_lufs}")
+
+write_replay_gain(input_file, input_file, gain_to_target_lufs)
