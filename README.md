@@ -1,7 +1,7 @@
 # Audio Loudness Normalization Script
 
 ## Introduction
-This Python script provides functionalities for calculating Loudness Units Full Scale (LUFS) integrated values and applying Replay Gain adjustments to audio files.
+This Python script provides functionalities for calculating Loudness Units Full Scale (LUFS) integrated values and applying Replay Gain adjustments to flac audio files.
 
 ## Features
 - Calculate LUFS integrated values for audio files.
@@ -16,34 +16,25 @@ This Python script provides functionalities for calculating Loudness Units Full 
 - [FFmpeg](https://ffmpeg.org/) (required by pydub)
 
 ## Installation
-You can install the required dependencies using pip:
+1. Clone this repo
+2. Install the required dependencies e.g. using pip:
 ```bash
 pip install mutagen pyloudnorm pydub soundfile
 ```
 
 ## Usage
-1. **Calculate LUFS Integrated Value:**
-```python
-integrated_lufs = calculate_lufs_integrated(input_file)
-```
+1. Run python gui.py
+2. Select input directory
+3. Select output directory
+4. Enter the Target LUFS value
+5. Click on "Process Files"
+6. Watch the progress in the status box. 
 
-2. **Calculate Gain to Target LUFS:**
-```python
-target_lufs = -14.0
-gain_to_target_lufs = calculate_gain_to_target_lufs(integrated_lufs, target_lufs)
-```
+### Notes:
+- Program keeps the file hierarchy.
+- Orignial files will remain unchanged.
 
-3. **Apply Replay Gain to Audio File:**
-```python
-write_replay_gain_ogg(input_file, gain_to_target_lufs)
-```
-
-## Examples
-```python
-input_file = "input/audio_file.ogg"
-integrated_lufs = calculate_lufs_integrated(input_file)
-target_lufs = -14.0
-gain_to_target_lufs = calculate_gain_to_target_lufs(integrated_lufs, target_lufs)
-write_replay_gain_ogg(input_file, gain_to_target_lufs)
-```
-
+### Tips
+- You can later use e.g. AIMP to convert flac to lost formats. I suggest opus.
+    - Remember that you can set the target LUFS e.g. 1 db higher and then normalise in the aimp to avoid cliping due to lossy compression.
+- Programs like Tidla-dl or Zotify can be a great source of input audio files.
