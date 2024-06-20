@@ -12,7 +12,7 @@ This Python script provides functionalities for calculating Loudness Units Full 
 - [mutagen](https://mutagen.readthedocs.io/en/latest/)
 - [pyloudnorm](https://github.com/csteinmetz1/pyloudnorm)
 - [pydub](https://github.com/jiaaro/pydub)
-- [soundfile](https://pysoundfile.readthedocs.io/en/0.10.3/)
+- [soundfile](https://python-soundfile.readthedocs.io/)
 - [FFmpeg](https://ffmpeg.org/) (required by pydub)
 
 ## Installation
