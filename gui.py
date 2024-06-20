@@ -9,6 +9,7 @@ def process_files(input_dir, target_lufs):
         input_file = os.path.join(input_dir, file)
         output_file = os.path.join("output", file)
         integrated_lufs = calculate_lufs_integrated(input_file)
+        print(f"Processing {file}: {integrated_lufs} LUFS")
         gain_to_target_lufs = calculate_gain_to_target_lufs(
             integrated_lufs, target_lufs
         )
@@ -26,7 +27,17 @@ def browse_directory():
 
 def start_processing():
     input_dir = input_dir_entry.get()
-    target_lufs = float(target_lufs_entry.get())
+    target_lufs = target_lufs_entry.get()
+    target_lufs = target_lufs.replace(",", ".")
+    try:
+        target_lufs = float(target_lufs)
+    except ValueError:
+        messagebox.showerror("Error", "Invalid target LUFS.")
+        return
+    if target_lufs >= 0:
+        messagebox.showerror("Error", "Target LUFS must be negative.")
+        return
+
     if os.path.isdir(input_dir):
         process_files(input_dir, target_lufs)
     else:

@@ -4,6 +4,7 @@ from pydub.utils import mediainfo
 import os
 import soundfile as sf
 import mutagen.flac
+import tempfile
 
 
 def calculate_gain_to_target_lufs(integrated_lufs, target_lufs):
@@ -14,12 +15,16 @@ def calculate_gain_to_target_lufs(integrated_lufs, target_lufs):
 def calculate_lufs_integrated(input_file):
     format = mediainfo(input_file)["format_name"]
     audio = AudioSegment.from_file(input_file, format=format)
-    temp_wav_file = "temp.wav"
-    audio.export(temp_wav_file, format="wav")
-    data, rate = sf.read(temp_wav_file)
+
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_wav_file:
+        temp_wav_path = temp_wav_file.name
+        audio.export(temp_wav_path, format="wav")
+
+    data, rate = sf.read(temp_wav_path)
     meter = pyloudnorm.Meter(rate)
     integrated_lufs = meter.integrated_loudness(data)
-    os.remove(temp_wav_file)
+
+    os.remove(temp_wav_path)
     return integrated_lufs
 
 
