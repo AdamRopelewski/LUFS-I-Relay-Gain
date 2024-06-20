@@ -55,13 +55,13 @@ def start_processing_thread():
     if os.path.isdir(input_dir) and os.path.isdir(output_dir):
         # Disable the process button
         process_button.config(state=tk.DISABLED)
-        delete_button.config(state=tk.DISABLED)
+        # delete_button.config(state=tk.DISABLED)
         # Clear previous status messages
         status_text.delete(1.0, tk.END)
 
         def enable_process_buttons():
             process_button.config(state=tk.NORMAL)
-            delete_button.config(state=tk.NORMAL)
+            # delete_button.config(state=tk.NORMAL)
 
         # Start processing in a separate thread
         global process_thread  # Make process_thread a global variable
