@@ -85,3 +85,5 @@ def process_files(input_dir, output_dir, target_lufs, update_callback=None):
 
     if update_callback:
         update_callback("Processing completed.")
+
+    return flac_files  # Return flac_files list at the end

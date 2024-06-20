@@ -55,17 +55,21 @@ def start_processing_thread():
     if os.path.isdir(input_dir) and os.path.isdir(output_dir):
         # Disable the process button
         process_button.config(state=tk.DISABLED)
+        delete_button.config(state=tk.DISABLED)
         # Clear previous status messages
         status_text.delete(1.0, tk.END)
 
-        def enable_process_button():
+        def enable_process_buttons():
             process_button.config(state=tk.NORMAL)
+            delete_button.config(state=tk.NORMAL)
 
         # Start processing in a separate thread
+        global process_thread  # Make process_thread a global variable
         process_thread = threading.Thread(
             target=process_files,
             args=(input_dir, output_dir, target_lufs, update_status),
         )
+
         process_thread.start()
 
         # Check the thread status periodically
@@ -74,24 +78,60 @@ def start_processing_thread():
                 root.after(100, check_thread)  # Check again after 100ms
             else:
                 # Enable the process button when processing is complete
-                enable_process_button()
+                global flac_files  # Make flac_files a global variable
+                flac_files = (
+                    process_files()
+                )  # Assuming process_thread returns flac_files
+
+                enable_process_buttons()
 
         root.after(100, check_thread)  # Start checking thread status after 100ms
     else:
         messagebox.showerror("Error", "Invalid input directory.")
 
 
+def delete_flac_files(output_dir, flac_files):
+    for file in flac_files:
+        file_path = os.path.join(output_dir, file)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+
+def delete_flac_files_gui():
+    output_dir = output_dir_entry.get()
+    if not os.path.isdir(output_dir):
+        messagebox.showerror("Error", "Invalid output directory.")
+        return
+    try:
+        if len(flac_files) == 0:
+            raise NameError
+    except NameError:
+        messagebox.showerror("Error", "No .flac files to delete (from this session).")
+        return
+    if messagebox.askokcancel(
+        "Delete FLAC Files", f"Do you want to delete all .flac files in {output_dir}?"
+    ):
+        delete_flac_files(output_dir, flac_files)
+        messagebox.showinfo("Delete Complete", "Deleted all .flac files.")
+
+
 def on_closing():
     if messagebox.askokcancel("Quit", "Do you want to quit?"):
         # Check if the processing thread is alive and terminate if necessary
-        if process_thread.is_alive():
-            process_thread.join()  # Wait for the thread to terminate
-        root.destroy()
+        try:
+            process_thread.daemon = True  # Terminate thread
+        except:
+            pass
+        finally:
+            root.destroy()
 
 
 # Set up the main application window
 root = tk.Tk()
 root.title("FLAC ReplayGain Processor")
+
+# Bind window close event to on_closing function
+root.protocol("WM_DELETE_WINDOW", on_closing)
 
 # Input directory selection
 tk.Label(root, text="Input Directory:").grid(row=0, column=0, padx=10, pady=5)
@@ -121,9 +161,13 @@ status_label.grid(row=3, columnspan=3, padx=10, pady=5)
 status_text = tk.Text(root, height=10, width=80, font=("Arial", 8), state=tk.DISABLED)
 status_text.grid(row=4, column=0, columnspan=3, padx=10, pady=5)
 
+# Delete FLAC files button
+# delete_button = tk.Button(root, text="Delete FLAC Files", command=delete_flac_files_gui)
+# delete_button.grid(row=5, columnspan=3, pady=20)
+
 # Process button
 process_button = tk.Button(root, text="Process Files", command=start_processing_thread)
-process_button.grid(row=5, columnspan=3, pady=20)
+process_button.grid(row=6, columnspan=3, pady=20)
 
 # Run the application
 root.mainloop()
