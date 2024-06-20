@@ -1,32 +1,46 @@
+# gui.py
+
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from main import *
+from main import process_files
+import threading
+import os
 
 
-def process_files(input_dir, target_lufs):
-    flac_files = find_flac_files(input_dir)
-    for file in flac_files:
-        input_file = os.path.join(input_dir, file)
-        output_file = os.path.join("output", file)
-        integrated_lufs = calculate_lufs_integrated(input_file)
-        print(f"Processing {file}: {integrated_lufs} LUFS")
-        gain_to_target_lufs = calculate_gain_to_target_lufs(
-            integrated_lufs, target_lufs
-        )
-        copy_file_to_output(input_file, output_file)
-        write_replay_gain_flac(input_file, gain_to_target_lufs, output_file)
-    messagebox.showinfo("Success", "Processing completed.")
-
-
-def browse_directory():
+def browse_input_directory():
     directory = filedialog.askdirectory()
     if directory:
         input_dir_entry.delete(0, tk.END)
         input_dir_entry.insert(0, directory)
 
 
-def start_processing():
+def browse_output_directory():
+    directory = filedialog.askdirectory()
+    if directory:
+        output_dir_entry.delete(0, tk.END)
+        output_dir_entry.insert(0, directory)
+
+
+def update_status(message):
+    status_text.config(state=tk.NORMAL)  # Allow modifications temporarily
+    status_text.insert(tk.END, message)
+
+    # Find and format LUFS value in bold
+    start_idx = status_text.search("] ", tk.END, backwards=True, regexp=True)
+    start_idx = status_text.index(f"{start_idx}+2c")  # Move 2 characters forward
+    end_idx = status_text.search(" LUFS", start_idx, tk.END, regexp=True)
+
+    if start_idx and end_idx:
+        status_text.tag_add("bold", start_idx, end_idx)
+        status_text.tag_configure("bold", font=("Arial", 8, "bold"))
+
+    status_text.config(state=tk.DISABLED)  # Disable modifications again
+    status_text.see(tk.END)  # Scroll to the end of the text
+
+
+def start_processing_thread():
     input_dir = input_dir_entry.get()
+    output_dir = output_dir_entry.get()
     target_lufs = target_lufs_entry.get()
     target_lufs = target_lufs.replace(",", ".")
     try:
@@ -38,10 +52,41 @@ def start_processing():
         messagebox.showerror("Error", "Target LUFS must be negative.")
         return
 
-    if os.path.isdir(input_dir):
-        process_files(input_dir, target_lufs)
+    if os.path.isdir(input_dir) and os.path.isdir(output_dir):
+        # Disable the process button
+        process_button.config(state=tk.DISABLED)
+        # Clear previous status messages
+        status_text.delete(1.0, tk.END)
+
+        def enable_process_button():
+            process_button.config(state=tk.NORMAL)
+
+        # Start processing in a separate thread
+        process_thread = threading.Thread(
+            target=process_files,
+            args=(input_dir, output_dir, target_lufs, update_status),
+        )
+        process_thread.start()
+
+        # Check the thread status periodically
+        def check_thread():
+            if process_thread.is_alive():
+                root.after(100, check_thread)  # Check again after 100ms
+            else:
+                # Enable the process button when processing is complete
+                enable_process_button()
+
+        root.after(100, check_thread)  # Start checking thread status after 100ms
     else:
         messagebox.showerror("Error", "Invalid input directory.")
+
+
+def on_closing():
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        # Check if the processing thread is alive and terminate if necessary
+        if process_thread.is_alive():
+            process_thread.join()  # Wait for the thread to terminate
+        root.destroy()
 
 
 # Set up the main application window
@@ -52,18 +97,33 @@ root.title("FLAC ReplayGain Processor")
 tk.Label(root, text="Input Directory:").grid(row=0, column=0, padx=10, pady=5)
 input_dir_entry = tk.Entry(root, width=50)
 input_dir_entry.grid(row=0, column=1, padx=10, pady=5)
-browse_button = tk.Button(root, text="Browse", command=browse_directory)
+browse_button = tk.Button(root, text="Browse", command=browse_input_directory)
 browse_button.grid(row=0, column=2, padx=10, pady=5)
+# Output directory selection
+
+tk.Label(root, text="Output Directory:").grid(row=1, column=0, padx=10, pady=5)
+output_dir_entry = tk.Entry(root, width=50)
+output_dir_entry.grid(row=1, column=1, padx=10, pady=5)
+browse_button = tk.Button(root, text="Browse", command=browse_output_directory)
+browse_button.grid(row=1, column=2, padx=10, pady=5)
+
 
 # Target LUFS input
-tk.Label(root, text="Target LUFS:").grid(row=1, column=0, padx=10, pady=5)
+tk.Label(root, text="Target LUFS:").grid(row=2, column=0, padx=10, pady=5)
 target_lufs_entry = tk.Entry(root, width=10)
-target_lufs_entry.grid(row=1, column=1, padx=10, pady=5)
+target_lufs_entry.grid(row=2, column=1, padx=10, pady=5)
 target_lufs_entry.insert(0, "-14.0")
 
+# Status text display
+status_label = tk.Label(root, text="Status:")
+status_label.grid(row=3, columnspan=3, padx=10, pady=5)
+
+status_text = tk.Text(root, height=10, width=80, font=("Arial", 8), state=tk.DISABLED)
+status_text.grid(row=4, column=0, columnspan=3, padx=10, pady=5)
+
 # Process button
-process_button = tk.Button(root, text="Process Files", command=start_processing)
-process_button.grid(row=2, columnspan=3, pady=20)
+process_button = tk.Button(root, text="Process Files", command=start_processing_thread)
+process_button.grid(row=5, columnspan=3, pady=20)
 
 # Run the application
 root.mainloop()

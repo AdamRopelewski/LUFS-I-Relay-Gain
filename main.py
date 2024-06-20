@@ -55,3 +55,33 @@ def copy_file_to_output(input_file, output_file):
     with open(input_file, "rb") as f:
         with open(output_file, "wb") as f2:
             f2.write(f.read())
+
+
+def process_files(input_dir, output_dir, target_lufs, update_callback=None):
+    flac_files = find_flac_files(input_dir)
+    n = len(flac_files)
+    for i in range(n):
+        file = flac_files[i]
+        input_file = os.path.join(input_dir, file)
+        output_file = os.path.join(output_dir, file)
+        file_name = os.path.basename(input_file)
+
+        try:
+            integrated_lufs = calculate_lufs_integrated(input_file)
+            message = f"[{i+1}/{n}] {integrated_lufs:.2f} LUFS | {file_name}\n"
+            if update_callback:
+                update_callback(message)
+
+            gain_to_target_lufs = calculate_gain_to_target_lufs(
+                integrated_lufs, target_lufs
+            )
+
+            copy_file_to_output(input_file, output_file)
+            write_replay_gain_flac(input_file, gain_to_target_lufs, output_file)
+        except Exception as e:
+            error_message = f"Failed to process {file}: {str(e)}\n"
+            if update_callback:
+                update_callback(error_message)
+
+    if update_callback:
+        update_callback("Processing completed.")
