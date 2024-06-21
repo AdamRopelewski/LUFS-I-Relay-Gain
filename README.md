@@ -5,7 +5,7 @@ This Python script provides functionalities for calculating Loudness Units Full 
 
 ## Features
 - Calculate LUFS integrated values for audio files.
-- Determine gain adjustments required to reach a target LUFS level.
+- Determine the gain adjustments required to reach a target LUFS level.
 - Apply Replay Gain adjustments to audio files for loudness normalization.
 
 ## Dependencies
@@ -17,24 +17,24 @@ This Python script provides functionalities for calculating Loudness Units Full 
 
 ## Installation
 1. Clone this repo
-2. Install the required dependencies e.g. using pip:
+2. Install the required dependencies, e.g. using pip:
 ```bash
 pip install mutagen pyloudnorm pydub soundfile
 ```
 
 ## Usage
 1. Run python gui.py
-2. Select input directory
-3. Select output directory
+2. Select the input directory
+3. Select the output directory
 4. Enter the Target LUFS value
 5. Click on "Process Files"
 6. Watch the progress in the status box. 
 
 ### Notes:
 - Program keeps the file hierarchy.
-- Orignial files will remain unchanged.
+- Original files will remain unchanged.
 
 ### Tips
-- You can later use e.g. AIMP to convert flac to lost formats. I suggest opus.
-    - Remember that you can set the target LUFS e.g. 1 db higher and then normalise in the aimp to avoid cliping due to lossy compression.
-- Programs like Tidla-dl or Zotify can be a great source of input audio files.
+- You can later use e.g. AIMP to convert flac to lost formats. I suggest Opus.
+    - Remember that you can set the target LUFS e.g. 1 dB higher, and then normalize in the AIMP to avoid clipping due to lossy compression.
+- Programs like Tidla-dl or Zotify can be great sources of input audio files.
