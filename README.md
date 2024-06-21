@@ -35,6 +35,6 @@ pip install mutagen pyloudnorm pydub soundfile
 - Original files will remain unchanged.
 
 ### Tips
-- You can later use e.g. AIMP to convert flac to lost formats. I suggest Opus.
+- You can later use e.g. AIMP to convert flac to lossy formats. I suggest Opus.
     - Remember that you can set the target LUFS e.g. 1 dB higher, and then normalize in the AIMP to avoid clipping due to lossy compression.
 - Programs like Tidla-dl or Zotify can be great sources of input audio files.
